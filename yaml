@@ -1,0 +1,41 @@
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Stack com EC2 e Apache - Região São Paulo (sa-east-1)"
+
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-052efd3df9dad4825 # Amazon Linux 2 - sa-east-1
+      KeyName: ju-chave-ec2
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "Bem-vindo ao servidor Apache criado com CloudFormation!" > /var/www/html/index.html
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Permite acesso SSH e HTTP"
+      VpcId: vpc-0ff1cebadc0ffee42
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  InstancePublicIP:
+    Description: "IP público da instância EC2"
+    Value: !GetAtt MyEC2Instance.PublicIp
